@@ -1,0 +1,3 @@
+"""config_entity.py module"""
+
+# TODO: Implement functionality
