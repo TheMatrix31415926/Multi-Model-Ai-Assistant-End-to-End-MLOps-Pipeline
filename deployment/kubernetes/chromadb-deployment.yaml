@@ -1,0 +1,54 @@
+# deployment/kubernetes/chromadb-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chromadb
+  namespace: multimodal-ai
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: chromadb
+  template:
+    metadata:
+      labels:
+        app: chromadb
+    spec:
+      containers:
+      - name: chromadb
+        image: chromadb/chroma:latest
+        ports:
+        - containerPort: 8000
+        env:
+        - name: CHROMA_SERVER_HOST
+          value: "0.0.0.0"
+        - name: CHROMA_SERVER_PORT
+          value: "8000"
+        - name: PERSIST_DIRECTORY
+          value: "/chroma/chroma"
+        volumeMounts:
+        - name: chromadb-storage
+          mountPath: /chroma/chroma
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "250m"
+      volumes:
+      - name: chromadb-storage
+        emptyDir: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: chromadb-service
+  namespace: multimodal-ai
+spec:
+  selector:
+    app: chromadb
+  ports:
+  - port: 8000
+    targetPort: 8000

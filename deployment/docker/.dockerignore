@@ -1,1 +1,70 @@
 # TODO: Add content
+git
+.gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Large files
+*.tar.gz
+*.zip
+*.rar
+
+# Logs
+logs/
+*.log
+
+# Temporary files
+tmp/
+temp/
+.tmp/
+
+# Model files (too large for container)
+models/checkpoints/*.pt
+models/checkpoints/*.pth
+*.model
+
+# Data files (mount as volume instead)
+data/raw/*
+!data/raw/.gitkeep
+
+# Jupyter notebooks
+*.ipynb_checkpoints
+
+# Documentation
+docs/build/
+*.pdf

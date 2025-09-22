@@ -1,2 +1,264 @@
 # Configuration file
 # TODO: Add configuration
+# .github/workflows/cd.yml - Continuous Deployment
+name: CD - Deploy to AWS
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+        - staging
+        - production
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY_API: multimodal-ai-api
+  ECR_REPOSITORY_FRONTEND: multimodal-ai-frontend
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    outputs:
+      api-image: ${{ steps.meta-api.outputs.tags }}
+      frontend-image: ${{ steps.meta-frontend.outputs.tags }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+    
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+    
+    - name: Extract metadata for API
+      id: meta-api
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_API }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+          type=sha
+    
+    - name: Extract metadata for Frontend
+      id: meta-frontend
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_FRONTEND }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+          type=sha
+    
+    - name: Build and push API image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: deployment/docker/Dockerfile.api
+        push: true
+        tags: ${{ steps.meta-api.outputs.tags }}
+        labels: ${{ steps.meta-api.outputs.labels }}
+    
+    - name: Build and push Frontend image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: deployment/docker/Dockerfile.frontend
+        push: true
+        tags: ${{ steps.meta-frontend.outputs.tags }}
+        labels: ${{ steps.meta-frontend.outputs.labels }}
+
+  deploy-to-ec2:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+    
+    - name: Deploy to EC2
+      env:
+        PRIVATE_KEY: ${{ secrets.EC2_PRIVATE_KEY }}
+        HOSTNAME: ${{ secrets.EC2_HOSTNAME }}
+        USER_NAME: ec2-user
+        API_IMAGE: ${{ needs.build-and-push.outputs.api-image }}
+        FRONTEND_IMAGE: ${{ needs.build-and-push.outputs.frontend-image }}
+      run: |
+        echo "$PRIVATE_KEY" > private_key.pem
+        chmod 600 private_key.pem
+        
+        # Create docker-compose override with new images
+        cat << EOF > docker-compose.prod.yml
+        version: '3.8'
+        services:
+          api:
+            image: $API_IMAGE
+          frontend:
+            image: $FRONTEND_IMAGE
+        EOF
+        
+        # Copy files to EC2
+        scp -i private_key.pem -o StrictHostKeyChecking=no \
+          docker-compose.prod.yml $USER_NAME@$HOSTNAME:/home/ec2-user/
+        
+        # Deploy on EC2
+        ssh -i private_key.pem -o StrictHostKeyChecking=no $USER_NAME@$HOSTNAME << 'EOF'
+          # Login to ECR
+          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ steps.login-ecr.outputs.registry }}
+          
+          # Stop existing containers
+          docker-compose down
+          
+          # Pull new images and start
+          docker-compose -f docker-compose.yml -f docker-compose.prod.yml pull
+          docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+          
+          # Health check
+          sleep 30
+          curl -f http://localhost:8000/health || exit 1
+          
+          echo "✅ Deployment successful!"
+        EOF
+        
+        rm private_key.pem
+
+  deploy-to-kubernetes:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+    
+    - name: Setup kubectl
+      uses: azure/setup-kubectl@v3
+      with:
+        version: 'latest'
+    
+    - name: Configure kubectl for EKS
+      run: |
+        aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name multimodal-ai-cluster
+    
+    - name: Deploy to Kubernetes
+      env:
+        API_IMAGE: ${{ needs.build-and-push.outputs.api-image }}
+        FRONTEND_IMAGE: ${{ needs.build-and-push.outputs.frontend-image }}
+      run: |
+        # Update image tags in deployment manifests
+        sed -i "s|multimodal-ai-api:latest|$API_IMAGE|g" deployment/kubernetes/api-deployment.yaml
+        sed -i "s|multimodal-ai-frontend:latest|$FRONTEND_IMAGE|g" deployment/kubernetes/frontend-deployment.yaml
+        
+        # Apply manifests
+        kubectl apply -f deployment/kubernetes/
+        
+        # Wait for rollout
+        kubectl rollout status deployment/multimodal-ai-api -n multimodal-ai
+        kubectl rollout status deployment/multimodal-ai-frontend -n multimodal-ai
+        
+        echo "✅ Kubernetes deployment successful!"
+
+  notify:
+    runs-on: ubuntu-latest
+    needs: [build-and-push, deploy-to-ec2]
+    if: always()
+    
+    steps:
+    - name: Notify Slack
+      if: always()
+      uses: 8398a7/action-slack@v3
+      with:
+        status: ${{ job.status }}
+        channel: '#deployments'
+        webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        fields: repo,message,commit,author,action,eventName,ref,workflow
+
+---
+
+# .github/workflows/docker-build.yml - Docker Build on PR
+name: Docker Build Test
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'api/**'
+      - 'frontend/**'
+      - 'docker-compose.yml'
+      - 'deployment/docker/**'
+      - 'requirements.txt'
+
+jobs:
+  docker-build-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Build API image (no push)
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: deployment/docker/Dockerfile.api
+        push: false
+        tags: test-api:latest
+    
+    - name: Build Frontend image (no push)
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: deployment/docker/Dockerfile.frontend
+        push: false
+        tags: test-frontend:latest
+    
+    - name: Test Docker Compose
+      run: |
+        # Create test environment file
+        cat << EOF > .env.test
+        OPENAI_API_KEY=test
+        HUGGINGFACE_TOKEN=test
+        MONGO_URL=mongodb://admin:password123@mongodb:27017
+        EOF
+        
+        # Test compose file syntax
+        docker-compose -f docker-compose.yml --env-file .env.test config > /dev/null
+        
+        echo "✅ Docker builds successful!"

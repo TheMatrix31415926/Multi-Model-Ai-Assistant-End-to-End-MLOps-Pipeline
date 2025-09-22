@@ -1,0 +1,444 @@
+Folder PATH listing for volume OS
+Volume serial number is 6C6C-9383
+C:.
+|   .dockerignore
+|   .dvcignore
+|   .env.example
+|   .gitignore
+|   app.py
+|   demo.py
+|   Dockerfile
+|   LICENSE
+|   main.py
+|   Makefile
+|   projectflow.txt
+|   project_structure.txt
+|   pyproject.toml
+|   pytest.ini
+|   quick_test.py
+|   README.md
+|   requirements-dev.txt
+|   requirements.txt
+|   run_app.py
+|   setup.py
+|   setup_docker.sh
+|   simple.py
+|   template.py
+|   test_local.py
+|   
++---.dvc
+|   |   .gitignore
+|   |   config
+|   |   
+|   \---tmp
+|       |   btime
+|       |   dag.md
+|       |   
+|       \---exps
+|           +---cache
+|           |   +---64
+|           |   |       073c73d8c6f138201c52ff78eec34fcd792bdf
+|           |   |       
+|           |   \---e1
+|           |           7a94a11eed3c8a4c4d097b3eb750f742a167ef
+|           |           
+|           \---celery
+|               +---broker
+|               |   +---control
+|               |   +---in
+|               |   \---processed
+|               \---result
++---.github
+|   +---templates
+|   \---workflows
+|           cd.yml
+|           ci.yml
+|           cleanup.yml
+|           docker-build.yml
+|           release.yml
+|           setup_github_secrets.sh
+|           test.yml
+|           
++---api
+|   |   main.py
+|   |   monitoring.py
+|   |   __init__.py
+|   |   
+|   +---middleware
+|   |       auth.py
+|   |       logging.py
+|   |       __init__.py
+|   |       
+|   +---routers
+|   |       chat.py
+|   |       health.py
+|   |       upload.py
+|   |       __init__.py
+|   |       
+|   +---schemas
+|   |       request.py
+|   |       response.py
+|   |       __init__.py
+|   |       
+|   \---__pycache__
+|           main.cpython-310.pyc
+|           monitoring.cpython-310.pyc
+|           __init__.cpython-310.pyc
+|           
++---cache
+|   +---fusion_features
+|   +---text_embeddings
+|   |       -1336113130088179167_sentence-transformers_all-MiniLM-L6-v2.npy
+|   |       -4289222998158224983_sentence-transformers_all-MiniLM-L6-v2.npy
+|   |       -5870275274454248017_sentence-transformers_all-MiniLM-L6-v2.npy
+|   |       -644727021498716448_sentence-transformers_all-MiniLM-L6-v2.npy
+|   |       -8068940146888785713_sentence-transformers_all-MiniLM-L6-v2.npy
+|   |       -80874118232029879_sentence-transformers_all-MiniLM-L6-v2.npy
+|   |       1200734771745910125_sentence-transformers_all-MiniLM-L6-v2.npy
+|   |       2428752365672015613_sentence-transformers_all-MiniLM-L6-v2.npy
+|   |       7372804801255592093_sentence-transformers_all-MiniLM-L6-v2.npy
+|   |       
+|   \---vision_embeddings
++---configs
+|   |   deployment.yaml
+|   |   model.yaml
+|   |   pipeline.yaml
+|   |   
+|   +---deployment
+|   |       docker_config.yaml
+|   |       k8s_config.yaml
+|   |       
+|   +---model
+|   |       fusion_config.yaml
+|   |       nlp_config.yaml
+|   |       vision_config.yaml
+|   |       
+|   \---pipeline
+|           inference_config.yaml
+|           training_config.yaml
+|           
++---data
+|   +---external
+|   |       .gitkeep
+|   |       
+|   +---interim
+|   |       .gitkeep
+|   |       
+|   +---processed
+|   |       .gitkeep
+|   |       
+|   \---raw
+|           .gitkeep
+|           
++---deployment
+|   +---docker
+|   |       .dockerignore
+|   |       docker-compose.override.yml
+|   |       docker-compose.yml
+|   |       Dockerfile
+|   |       Dockerfile.api
+|   |       Dockerfile.frontend
+|   |       entrypoint.sh
+|   |       
+|   +---kubernetes
+|   |       api-deployment.yaml
+|   |       chromadb-deployment.yaml
+|   |       configmap.yaml
+|   |       deployment.yaml
+|   |       frontend-deployment.yaml
+|   |       hpa.yaml
+|   |       ingress.yaml
+|   |       mongodb-deployment.yaml
+|   |       namespace.yaml
+|   |       secrets.yaml
+|   |       service.yaml
+|   |       
+|   +---mongodb
+|   |       init.js
+|   |       
+|   +---monitoring
+|   |       grafana-dashboard.json
+|   |       prometheus.yml
+|   |       
+|   +---nginx
+|   |       nginx.conf
+|   |       
+|   +---scripts
+|   |       cleanup_aws.sh
+|   |       complete_aws_setup.sh
+|   |       cost_monitor.sh
+|   |       create_key_pair.sh
+|   |       deploy.sh
+|   |       deploy_k8s.sh
+|   |       deploy_to_aws.sh
+|   |       monitoring.py
+|   |       quick_test.py
+|   |       setup_monitoring.sh
+|   |       start_services.py
+|   |       test_docker.py
+|   |       
+|   \---terraform
+|           main.tf
+|           outputs.tf
+|           user_data.sh
+|           variables.tf
+|           
++---docs
+|   |   README.md
+|   |   
+|   +---api
+|   |       api_documentation.md
+|   |       
+|   +---architecture
+|   |       system_architecture.md
+|   |       
+|   \---deployment
+|           deployment_guide.md
+|           
++---experiments
+|   \---mlflow
+|           .gitkeep
+|           
++---frontend
+|   |   app.py
+|   |   __init__.py
+|   |   
+|   +---components
+|   |       chat_interface.py
+|   |       file_upload.py
+|   |       __init__.py
+|   |       
+|   +---pages
+|   |       chat.py
+|   |       home.py
+|   |       __init__.py
+|   |       
+|   +---utils
+|   |       helpers.py
+|   |       __init__.py
+|   |       
+|   \---__pycache__
+|           app.cpython-310.pyc
+|           __init__.cpython-310.pyc
+|           
++---logs
+|       .gitkeep
+|       
++---models
+|   +---artifacts
+|   |       .gitkeep
+|   |       
+|   \---checkpoints
+|           .gitkeep
+|           
++---monitoring
+|   |   dashboard_generator.py
+|   |   docker-compose.monitoring.yml
+|   |   health_checker.py
+|   |   log_analyzer.py
+|   |   
+|   +---alerting
+|   |       alert_manager.py
+|   |       
+|   +---alertmanager
+|   |       alertmanager.yml
+|   |       
+|   +---grafana
+|   |   |   dashboard.json
+|   |   |   
+|   |   \---datasources
+|   |           prometheus.yml
+|   |           
+|   \---prometheus
+|           alert_rules.yml
+|           prometheus.yml
+|           
++---multimodal_ai_assistant
+|   |   __init__.py
+|   |   
+|   +---cloud_storage
+|   |       aws_storage.py
+|   |       gcp_storage.py
+|   |       __init__.py
+|   |       
+|   +---components
+|   |       data_ingestion.py
+|   |       data_transformation.py
+|   |       data_validation.py
+|   |       model_evaluation.py
+|   |       model_pusher.py
+|   |       model_trainer.py
+|   |       __init__.py
+|   |       
+|   +---configuration
+|   |       aws_connection.py
+|   |       mongo_db_connection.py
+|   |       vector_db_connection.py
+|   |       __init__.py
+|   |       
+|   +---constants
+|   |       __init__.py
+|   |       
+|   +---data_access
+|   |       multimodal_data.py
+|   |       __init__.py
+|   |       
+|   +---entity
+|   |       artifact_entity.py
+|   |       config_entity.py
+|   |       estimator.py
+|   |       __init__.py
+|   |       
+|   +---exception
+|   |       __init__.py
+|   |       
+|   +---knowledge_base
+|   +---logger
+|   |       __init__.py
+|   |       
+|   +---multimodal
+|   |   |   __init__.py
+|   |   |   
+|   |   +---agents
+|   |   |   |   conversation_agent.py
+|   |   |   |   vqa_agent.py
+|   |   |   |   __init__.py
+|   |   |   |   
+|   |   |   \---__pycache__
+|   |   |           conversation_agent.cpython-310.pyc
+|   |   |           vqa_agent.cpython-310.pyc
+|   |   |           __init__.cpython-310.pyc
+|   |   |           
+|   |   +---embeddings
+|   |   +---fusion
+|   |   |   |   multimodal_fusion.py
+|   |   |   |   __init__.py
+|   |   |   |   
+|   |   |   \---__pycache__
+|   |   |           multimodal_fusion.cpython-310.pyc
+|   |   |           __init__.cpython-310.pyc
+|   |   |           
+|   |   +---nlp
+|   |   |   |   language_model.py
+|   |   |   |   text_processor.py
+|   |   |   |   __init__.py
+|   |   |   |   
+|   |   |   \---__pycache__
+|   |   |           language_model.cpython-310.pyc
+|   |   |           __init__.cpython-310.pyc
+|   |   |           
+|   |   +---vision
+|   |   |   |   image_processor.py
+|   |   |   |   vision_encoder.py
+|   |   |   |   __init__.py
+|   |   |   |   
+|   |   |   \---__pycache__
+|   |   |           vision_encoder.cpython-310.pyc
+|   |   |           __init__.cpython-310.pyc
+|   |   |           
+|   |   \---__pycache__
+|   |           __init__.cpython-310.pyc
+|   |           
+|   +---pipeline
+|   |   |   prediction_pipeline.py
+|   |   |   training_pipeline.py
+|   |   |   __init__.py
+|   |   |   
+|   |   \---__pycache__
+|   |           prediction_pipeline.cpython-310.pyc
+|   |           __init__.cpython-310.pyc
+|   |           
+|   +---retrievers
+|   |       document_retriever.py
+|   |       image_retriever.py
+|   |       __init__.py
+|   |       
+|   +---utils
+|   |       main_utils.py
+|   |       __init__.py
+|   |       
+|   +---vector_store
+|   |   |   chroma_store.py
+|   |   |   embedding_manager.py
+|   |   |   __init__.py
+|   |   |   
+|   |   \---__pycache__
+|   |           chroma_store.cpython-310.pyc
+|   |           __init__.cpython-310.pyc
+|   |           
+|   \---__pycache__
+|           __init__.cpython-310.pyc
+|           
++---notebooks
+|   +---experiments
+|   +---exploration
+|   \---visualization
++---pipelines
+|   |   __init__.py
+|   |   
+|   +---data
+|   |       data_preprocessing.py
+|   |       __init__.py
+|   |       
+|   +---inference
+|   |       predict_multimodal.py
+|   |       __init__.py
+|   |       
+|   +---monitoring
+|   \---training
+|           train_multimodal.py
+|           __init__.py
+|           
++---reports
+|   \---figures
+|           .gitkeep
+|           
++---scripts
+|   +---data
+|   |       download_data.py
+|   |       preprocess_data.py
+|   |       
+|   +---deployment
+|   |       deploy.sh
+|   |       rollback.sh
+|   |       
+|   +---monitoring
+|   |       health_check.py
+|   |       
+|   \---setup
+|           install_dependencies.sh
+|           setup_environment.sh
+|           
+\---tests
+    |   conftest.py
+    |   run_local.py
+    |   __init__.py
+    |   
+    +---e2e
+    |       test_complete_workflows.py
+    |       test_deployment_scenarios.py
+    |       test_user_scenarios.py
+    |       __init__.py
+    |       
+    +---fixtures
+    +---integration
+    |       conftest.py
+    |       test_api.py
+    |       test_api_integration.py
+    |       test_database_integration.py
+    |       test_data_pipeline.py
+    |       test_docker_integration.py
+    |       test_monitoring_integration.py
+    |       test_pipeline.py
+    |       __init__.py
+    |       
+    \---unit
+            test_api_endpoints.py
+            test_components.py
+            test_data_ingestion.py
+            test_data_validation.py
+            test_monitoring.py
+            test_multimodal.py
+            test_utils.py
+            __init__.py
+            

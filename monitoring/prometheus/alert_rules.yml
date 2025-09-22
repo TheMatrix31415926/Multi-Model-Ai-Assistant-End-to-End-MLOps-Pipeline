@@ -1,0 +1,79 @@
+# monitoring/prometheus/alert_rules.yml - Alert rules
+groups:
+- name: multimodal_ai_alerts
+  rules:
+  
+  # API Health Alerts
+  - alert: APIDown
+    expr: up{job="multimodal-ai-api"} == 0
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Multi-Modal AI API is down"
+      description: "The API has been down for more than 1 minute."
+
+  - alert: HighResponseTime
+    expr: http_request_duration_seconds{quantile="0.95"} > 2
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High API response time"
+      description: "95th percentile response time is {{ $value }}s"
+
+  - alert: HighErrorRate
+    expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.1
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High error rate detected"
+      description: "Error rate is {{ $value }} errors per second"
+
+  # System Resource Alerts
+  - alert: HighCPUUsage
+    expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High CPU usage"
+      description: "CPU usage is {{ $value }}% on {{ $labels.instance }}"
+
+  - alert: HighMemoryUsage
+    expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High memory usage"
+      description: "Memory usage is {{ $value }}% on {{ $labels.instance }}"
+
+  - alert: LowDiskSpace
+    expr: (1 - (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"})) * 100 > 85
+    for: 1m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Low disk space"
+      description: "Disk usage is {{ $value }}% on {{ $labels.instance }}"
+
+  # Application Specific Alerts
+  - alert: HighRequestVolume
+    expr: rate(http_requests_total[5m]) > 100
+    for: 1m
+    labels:
+      severity: info
+    annotations:
+      summary: "High request volume"
+      description: "Receiving {{ $value }} requests per second"
+
+  - alert: DatabaseConnectionFailure
+    expr: mongodb_connections_current == 0
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Database connection failure"
+      description: "No active MongoDB connections detected"

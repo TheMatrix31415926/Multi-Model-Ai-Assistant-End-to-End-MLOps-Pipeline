@@ -1,2 +1,249 @@
 # Configuration file
 # TODO: Add configuration
+# docker-compose.yml - Production multi-container setup
+version: '3.8'
+
+services:
+  # FastAPI Backend Service
+  api:
+    build:
+      context: .
+      dockerfile: deployment/docker/Dockerfile.api
+    container_name: multimodal-ai-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONPATH=/app
+      - DEBUG=false
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - MONGO_URL=mongodb://mongodb:27017
+      - CHROMA_PERSIST_DIR=/app/chroma_db
+    volumes:
+      - ./artifacts:/app/artifacts
+      - ./logs:/app/logs
+      - ./chroma_db:/app/chroma_db
+      - ./models:/app/models
+    depends_on:
+      - mongodb
+      - chromadb
+    networks:
+      - multimodal-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Streamlit Frontend Service
+  frontend:
+    build:
+      context: .
+      dockerfile: deployment/docker/Dockerfile.frontend
+    container_name: multimodal-ai-frontend
+    restart: unless-stopped
+    ports:
+      - "8501:8501"
+    environment:
+      - API_BASE_URL=http://api:8000
+    depends_on:
+      - api
+    networks:
+      - multimodal-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # MongoDB Database Service
+  mongodb:
+    image: mongo:6.0
+    container_name: multimodal-ai-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=password123
+      - MONGO_INITDB_DATABASE=multimodal_ai
+    volumes:
+      - mongodb_data:/data/db
+      - ./deployment/mongodb/init.js:/docker-entrypoint-initdb.d/init.js:ro
+    networks:
+      - multimodal-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  # ChromaDB Vector Database Service
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: multimodal-ai-chromadb
+    restart: unless-stopped
+    ports:
+      - "8002:8000"
+    environment:
+      - CHROMA_SERVER_HOST=0.0.0.0
+      - CHROMA_SERVER_PORT=8000
+      - PERSIST_DIRECTORY=/chroma/chroma
+    volumes:
+      - chromadb_data:/chroma/chroma
+    networks:
+      - multimodal-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  # MLflow Tracking Server
+  mlflow:
+    image: python:3.9-slim
+    container_name: multimodal-ai-mlflow
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - MLFLOW_BACKEND_STORE_URI=mongodb://admin:password123@mongodb:27017/mlflow?authSource=admin
+      - MLFLOW_DEFAULT_ARTIFACT_ROOT=/mlflow/artifacts
+    volumes:
+      - mlflow_data:/mlflow
+      - ./experiments:/app/experiments
+    depends_on:
+      - mongodb
+    networks:
+      - multimodal-network
+    command: >
+      bash -c "
+        pip install mlflow pymongo &&
+        mlflow server 
+        --backend-store-uri mongodb://admin:password123@mongodb:27017/mlflow?authSource=admin
+        --default-artifact-root /mlflow/artifacts
+        --host 0.0.0.0
+        --port 5000
+      "
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Nginx Reverse Proxy (Optional)
+  nginx:
+    image: nginx:alpine
+    container_name: multimodal-ai-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deployment/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./deployment/nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - api
+      - frontend
+    networks:
+      - multimodal-network
+    profiles:
+      - production
+
+# Named volumes for persistent data
+volumes:
+  mongodb_data:
+    driver: local
+  chromadb_data:
+    driver: local
+  mlflow_data:
+    driver: local
+
+# Custom network
+networks:
+  multimodal-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+---
+
+# docker-compose.dev.yml - Development setup
+version: '3.8'
+
+services:
+  # Development API with hot reload
+  api-dev:
+    build:
+      context: .
+      dockerfile: deployment/docker/Dockerfile.api
+    container_name: multimodal-ai-api-dev
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONPATH=/app
+      - DEBUG=true
+      - RELOAD=true
+    volumes:
+      - .:/app
+      - /app/__pycache__
+    networks:
+      - dev-network
+    command: >
+      python -m uvicorn api.main:app 
+      --host 0.0.0.0 --port 8000 --reload
+
+  # Development Frontend with hot reload
+  frontend-dev:
+    build:
+      context: .
+      dockerfile: deployment/docker/Dockerfile.frontend
+    container_name: multimodal-ai-frontend-dev
+    ports:
+      - "8501:8501"
+    environment:
+      - API_BASE_URL=http://api-dev:8000
+    volumes:
+      - ./frontend:/app/frontend
+    depends_on:
+      - api-dev
+    networks:
+      - dev-network
+
+  # Lightweight MongoDB for development
+  mongodb-dev:
+    image: mongo:6.0
+    container_name: multimodal-ai-mongodb-dev
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=multimodal_ai_dev
+    volumes:
+      - mongodb_dev_data:/data/db
+    networks:
+      - dev-network
+
+  # ChromaDB for development
+  chromadb-dev:
+    image: chromadb/chroma:latest
+    container_name: multimodal-ai-chromadb-dev
+    ports:
+      - "8002:8000"
+    volumes:
+      - ./chroma_dev:/chroma/chroma
+    networks:
+      - dev-network
+
+volumes:
+  mongodb_dev_data:
+
+networks:
+  dev-network:
+    driver: bridge

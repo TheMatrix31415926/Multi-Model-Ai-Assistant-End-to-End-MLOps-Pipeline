@@ -1,0 +1,47 @@
+
+# .github/workflows/release.yml - Release workflow
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Generate changelog
+      id: changelog
+      run: |
+        # Simple changelog generation
+        git log $(git describe --tags --abbrev=0 HEAD^)..HEAD --pretty=format:"- %s" > changelog.txt
+        echo "changelog<<EOF" >> $GITHUB_OUTPUT
+        cat changelog.txt >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+    
+    - name: Create Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        body: |
+          ## Changes in this release
+          ${{ steps.changelog.outputs.changelog }}
+          
+          ## Docker Images
+          - API: `multimodal-ai-api:${{ github.ref_name }}`
+          - Frontend: `multimodal-ai-frontend:${{ github.ref_name }}`
+          
+          ## Deployment
+          Use the deployment scripts in the `deployment/` directory to deploy this version.
+        draft: false
+        prerelease: false

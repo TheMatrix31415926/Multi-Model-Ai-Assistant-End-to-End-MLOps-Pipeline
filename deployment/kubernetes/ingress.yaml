@@ -1,2 +1,30 @@
 # Configuration file
 # TODO: Add configuration
+# deployment/kubernetes/ingress.yaml (Optional - for custom domain)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: multimodal-ai-ingress
+  namespace: multimodal-ai
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - host: multimodal-ai.yourdomain.com
+    http:
+      paths:
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: multimodal-ai-api-service
+            port:
+              number: 8000
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: multimodal-ai-frontend-service
+            port:
+              number: 8501

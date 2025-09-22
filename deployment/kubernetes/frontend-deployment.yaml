@@ -1,0 +1,57 @@
+# deployment/kubernetes/frontend-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: multimodal-ai-frontend
+  namespace: multimodal-ai
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: multimodal-ai-frontend
+  template:
+    metadata:
+      labels:
+        app: multimodal-ai-frontend
+    spec:
+      containers:
+      - name: frontend
+        image: multimodal-ai-frontend:latest
+        ports:
+        - containerPort: 8501
+        env:
+        - name: API_BASE_URL
+          value: "http://multimodal-ai-api-service:8000"
+        livenessProbe:
+          httpGet:
+            path: /_stcore/health
+            port: 8501
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /_stcore/health
+            port: 8501
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "250m"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: multimodal-ai-frontend-service
+  namespace: multimodal-ai
+spec:
+  selector:
+    app: multimodal-ai-frontend
+  ports:
+  - port: 8501
+    targetPort: 8501
+  type: LoadBalancer  # This will create an AWS Load Balancer
