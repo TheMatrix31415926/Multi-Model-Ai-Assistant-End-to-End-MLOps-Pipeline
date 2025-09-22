@@ -8,25 +8,25 @@ Multi-Modal AI Assistant - Complete Project Flow
  Phase 1: Project Setup & Foundation (Week 1)
 Step 1: Environment Setup
 bash
-# 1.1 Run template script
+ 1.1 Run template script
 python template.py
 
-# 1.2 Create virtual environment
+ 1.2 Create virtual environment
 cd multimodal_ai_assistant
 python -m venv venv
 source venv/bin/activate  # Linux/Mac
 
-# 1.3 Install base dependencies
+ 1.3 Install base dependencies
 pip install datasets transformers torch pillow pandas streamlit fastapi uvicorn
 pip install chromadb langchain langchain-openai openai
 pip install mlflow dvc boto3 pymongo
 Step 2: Core Configuration
 bash
-# 2.1 Setup environment variables
+ 2.1 Setup environment variables
 cp .env.example .env
-# Fill in API keys (OpenAI, HuggingFace, AWS, MongoDB)
 
-# 2.2 Initialize git and DVC
+
+ 2.2 Initialize git and DVC
 git init
 dvc init
 git add .
