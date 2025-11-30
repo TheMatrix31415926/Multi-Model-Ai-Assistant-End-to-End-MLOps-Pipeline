@@ -209,13 +209,13 @@ def generate_ai_response(question: str, image_id: str = None) -> Dict[str, Any]:
                 
                 if score > max_score:
                     max_score = score
-                    best_match = sample
+                    best_match = sample 
             
             if best_match and max_score > 0:
                 response_data = {
                     "response": f"Based on the image analysis, I can see that {best_match['primary_answer']}. This relates to your question about the visual content.",
                     "confidence": min(0.95, 0.70 + max_score * 0.1),
-                    "source": "visual_analysis",
+                    "source": "visual_analysis", 
                     "matched_sample": best_match['question']
                 }
             else:
