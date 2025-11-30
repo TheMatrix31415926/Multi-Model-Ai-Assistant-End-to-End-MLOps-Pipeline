@@ -31,7 +31,7 @@ try:
     HAS_MONITORING = True
 except ImportError as e:
     print(f"Warning: Monitoring components not available: {e}")
-    HAS_MONITORING = False
+    HAS_MONITORING = False 
     
     # Create mock monitoring functions
     def setup_metrics(app): pass
