@@ -369,7 +369,7 @@ def run_integration_test():
         greeting = pipeline.predict("Hello! I'm testing the integration.")
         print(f"   Step 1 - Greeting: {greeting.get('response', 'No response')[:60]}...")
         
-        session_id = greeting.get('session_id')
+        session_id = greeting.get('session_id') 
         
         # Step 2: Image analysis
         test_image = create_test_image('purple', (250, 250))
