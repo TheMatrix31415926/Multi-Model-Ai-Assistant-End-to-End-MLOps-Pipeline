@@ -5,7 +5,7 @@ C:.
 |   .dvcignore
 |   .env.example
 |   .gitignore
-|   app.py
+|   app.py 
 |   demo.py
 |   Dockerfile
 |   LICENSE
