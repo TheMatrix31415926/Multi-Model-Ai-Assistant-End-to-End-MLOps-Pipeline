@@ -4,7 +4,7 @@ Focus on functionality and user experience then Wrap the AI assistant in a compl
 
 Multi-Modal AI Assistant - Complete Project Flow
 
-
+ 
  Phase 1: Project Setup & Foundation 
 Step 1: Environment Setup
 bash
