@@ -10,7 +10,7 @@ Step 1: Environment Setup
 bash
  1.1 Run template script
 python template.py
-
+ 
  1.2 Create virtual environment
 cd multimodal_ai_assistant
 python -m venv venv
