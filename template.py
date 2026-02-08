@@ -386,7 +386,7 @@ def main():
     # Create files
     create_files()
     print("-" * 60)
-    
+     
     print("✅ Project structure created successfully!")
     print(f"📁 Total directories created: {len(directories)}")
     print(f"📄 Total files created: {len(files_to_create)}")
